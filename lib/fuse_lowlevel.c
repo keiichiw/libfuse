@@ -1790,6 +1790,8 @@ static void do_init(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 			f->conn.capable |= FUSE_CAP_DONT_MASK;
 		if (arg->flags & FUSE_FLOCK_LOCKS)
 			f->conn.capable |= FUSE_CAP_FLOCK_LOCKS;
+		if (arg->flags & FUSE_PARALLEL_DIROPS)
+			f->conn.capable |= FUSE_CAP_PARALLEL_DIROPS;
 	} else {
 		f->conn.async_read = 0;
 		f->conn.max_readahead = 0;
@@ -1811,6 +1813,10 @@ static void do_init(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 	}
 	if (req->f->conn.proto_minor >= 18)
 		f->conn.capable |= FUSE_CAP_IOCTL_DIR;
+
+	/* Enable PARALLEL_DIROPS by default if supported. */
+	if (f->conn.capable & FUSE_CAP_PARALLEL_DIROPS)
+		f->conn.want |= FUSE_CAP_PARALLEL_DIROPS;
 
 	if (f->atomic_o_trunc)
 		f->conn.want |= FUSE_CAP_ATOMIC_O_TRUNC;
@@ -1856,6 +1862,8 @@ static void do_init(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 		outarg.flags |= FUSE_DONT_MASK;
 	if (f->conn.want & FUSE_CAP_FLOCK_LOCKS)
 		outarg.flags |= FUSE_FLOCK_LOCKS;
+	if (f->conn.want & FUSE_CAP_PARALLEL_DIROPS)
+		outarg.flags |= FUSE_PARALLEL_DIROPS;
 	outarg.max_readahead = f->conn.max_readahead;
 	outarg.max_write = f->conn.max_write;
 	if (f->conn.proto_minor >= 13) {
